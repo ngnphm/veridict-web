@@ -63,7 +63,6 @@ export async function signInWithCode(code) {
   let authError = null
 
   const { error: emailOtpError } = await supabase.auth.verifyOtp({
-    email: data.email,
     token_hash: data.token_hash,
     type: 'email',
   })
@@ -71,7 +70,6 @@ export async function signInWithCode(code) {
 
   if (authError) {
     const { error: magicLinkError } = await supabase.auth.verifyOtp({
-      email: data.email,
       token_hash: data.token_hash,
       type: 'magiclink',
     })

@@ -13,7 +13,9 @@ Deno.serve(async (req) => {
 
   try {
     const { code } = await req.json()
-    if (!code) {
+    const normalizedCode = String(code ?? '').trim().toUpperCase()
+
+    if (!normalizedCode) {
       return new Response(JSON.stringify({ error: 'Code is required' }), {
         status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       })
@@ -27,7 +29,7 @@ Deno.serve(async (req) => {
 
     // Redeem the code — returns the user_id
     const { data: userId, error: redeemError } = await supabase
-      .rpc('redeem_login_code', { p_code: code })
+      .rpc('redeem_login_code', { p_code: normalizedCode })
 
     if (redeemError || !userId) {
       return new Response(JSON.stringify({ error: 'Invalid or expired code' }), {
@@ -35,20 +37,34 @@ Deno.serve(async (req) => {
       })
     }
 
-    // Create a real Supabase session for that user
-    const { data: sessionData, error: sessionError } = await supabase.auth.admin.createSession({
-      user_id: userId,
+    const { data: userData, error: userError } = await supabase.auth.admin.getUserById(userId)
+
+    if (userError || !userData?.user?.email) {
+      return new Response(JSON.stringify({ error: 'User email not found for code login' }), {
+        status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      })
+    }
+
+    const { data: linkData, error: linkError } = await supabase.auth.admin.generateLink({
+      type: 'magiclink',
+      email: userData.user.email,
     })
 
-    if (sessionError || !sessionData?.session) {
-      return new Response(JSON.stringify({ error: 'Failed to create session' }), {
+    const tokenHash =
+      linkData?.properties?.hashed_token ??
+      linkData?.properties?.hashedToken ??
+      linkData?.hashed_token ??
+      linkData?.action_link?.match(/[?&]token_hash=([^&]+)/)?.[1]
+
+    if (linkError || !tokenHash) {
+      return new Response(JSON.stringify({ error: 'Failed to prepare login session' }), {
         status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       })
     }
 
     return new Response(JSON.stringify({
-      access_token: sessionData.session.access_token,
-      refresh_token: sessionData.session.refresh_token,
+      email: userData.user.email,
+      token_hash: tokenHash,
     }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     })

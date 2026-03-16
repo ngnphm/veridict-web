@@ -51,23 +51,34 @@ export async function signInWithApple() {
 }
 
 export async function signInWithCode(code) {
-  const res = await fetch(
-    'https://xonquattjmsikcsxudig.supabase.co/functions/v1/redeem-code',
-    {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ code: code.trim().toUpperCase() }),
-    }
-  )
+  const normalizedCode = code.trim().toUpperCase()
 
-  const data = await res.json()
-  if (!res.ok) throw new Error(data.error || 'Invalid or expired code')
-
-  const { error } = await supabase.auth.setSession({
-    access_token: data.access_token,
-    refresh_token: data.refresh_token,
+  const { data, error: invokeError } = await supabase.functions.invoke('redeem-code', {
+    body: { code: normalizedCode },
   })
-  if (error) throw error
+
+  if (invokeError) throw invokeError
+  if (!data?.email || !data?.token_hash) throw new Error('Invalid or expired code')
+
+  let authError = null
+
+  const { error: emailOtpError } = await supabase.auth.verifyOtp({
+    email: data.email,
+    token_hash: data.token_hash,
+    type: 'email',
+  })
+  authError = emailOtpError
+
+  if (authError) {
+    const { error: magicLinkError } = await supabase.auth.verifyOtp({
+      email: data.email,
+      token_hash: data.token_hash,
+      type: 'magiclink',
+    })
+    authError = magicLinkError
+  }
+
+  if (authError) throw authError
 }
 
 export async function signOut() {

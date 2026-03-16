@@ -52,7 +52,7 @@ export async function signInWithApple() {
 
 export async function signInWithCode(code) {
   const res = await fetch(
-    'https://xonquattjmsikcsxudig.supabase.co/functions/v1/redeem-code',
+    `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/redeem-code`,
     {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${SUPABASE_ANON_KEY}` },

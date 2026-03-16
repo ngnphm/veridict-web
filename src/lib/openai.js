@@ -1,6 +1,6 @@
 import { supabase } from './supabase'
 
-const BASE = 'https://xonquattjmsikcsxudig.supabase.co/functions/v1'
+const BASE = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1`
 
 async function callFunction(name, body) {
   const { data: { session } } = await supabase.auth.getSession()

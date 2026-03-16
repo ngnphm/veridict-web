@@ -121,13 +121,9 @@ export async function createClaim({
 
 export async function resolveClaim(id, result) {
   const { data, error } = await supabase
-    .from('claims')
-    .update({ result, status: 'resolved', updated_at: new Date().toISOString() })
-    .eq('id', id)
-    .select()
-    .single()
+    .rpc('resolve_claim', { p_claim_id: id, p_result: result })
   if (error) throw error
-  return mapClaim(data)
+  return mapClaim(data?.[0] ?? data)
 }
 
 export async function deleteClaim(id) {

@@ -1,4 +1,4 @@
-import { supabase } from '../lib/supabase'
+import { supabase, SUPABASE_ANON_KEY } from '../lib/supabase'
 
 export async function signUp(email, password, username) {
   const { data: existing } = await supabase
@@ -55,7 +55,7 @@ export async function signInWithCode(code) {
     'https://xonquattjmsikcsxudig.supabase.co/functions/v1/redeem-code',
     {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${SUPABASE_ANON_KEY}` },
       body: JSON.stringify({ code: code.trim().toUpperCase() }),
     }
   )

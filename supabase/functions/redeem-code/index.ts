@@ -30,7 +30,7 @@ Deno.serve(async (req) => {
       .rpc('redeem_login_code', { p_code: code })
 
     if (redeemError || !userId) {
-      return new Response(JSON.stringify({ error: 'Invalid or expired code' }), {
+      return new Response(JSON.stringify({ error: redeemError?.message || 'Invalid or expired code' }), {
         status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       })
     }

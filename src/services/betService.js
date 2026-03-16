@@ -21,17 +21,13 @@ export async function fetchBets(claimId) {
   return (data || []).map(mapBet)
 }
 
-export async function placeBet(claimId, userId, side, amount) {
+export async function placeBet(claimId, _userId, side, amount) {
   const { data, error } = await supabase
-    .from('bets')
-    .insert({
-      claim_id: claimId,
-      user_id: userId,
-      side,
-      amount,
+    .rpc('place_bet', {
+      p_claim_id: claimId,
+      p_side: side,
+      p_amount: amount,
     })
-    .select()
-    .single()
   if (error) throw error
-  return mapBet(data)
+  return mapBet(data?.[0] ?? data)
 }

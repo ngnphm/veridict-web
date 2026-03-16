@@ -266,10 +266,16 @@ export default function ClaimDetailView() {
         )}
 
         {/* Place bet button */}
-        {!myBet && claim.status !== 'resolved' && claim.status !== 'disputed' && (
+        {!isOwner && !myBet && claim.status !== 'resolved' && claim.status !== 'disputed' && (
           <button onClick={() => setShowBetModal(true)} className="btn-primary w-full">
             Place a Bet
           </button>
+        )}
+
+        {isOwner && claim.status !== 'resolved' && claim.status !== 'disputed' && (
+          <div className="rounded-xl px-3 py-2 text-sm text-gray-500 bg-gray-800/80">
+            You cannot bet on your own claim.
+          </div>
         )}
       </div>
 

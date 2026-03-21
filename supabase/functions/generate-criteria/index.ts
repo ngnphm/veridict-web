@@ -67,7 +67,10 @@ Respond ONLY with valid JSON:
       }),
     })
 
-    if (!res.ok) throw new Error('OpenAI request failed')
+    if (!res.ok) {
+      const errBody = await res.json().catch(() => ({}))
+      throw new Error(errBody?.error?.message || `OpenAI error ${res.status}`)
+    }
 
     const data = await res.json()
     const result = JSON.parse(data.choices[0].message.content)

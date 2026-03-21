@@ -15,8 +15,10 @@ async function callFunction(name, body) {
     body: JSON.stringify(body),
   })
 
-  const data = await res.json()
-  if (!res.ok) throw new Error(data.error || 'AI request failed')
+  const text = await res.text()
+  let data
+  try { data = JSON.parse(text) } catch { throw new Error(`Bad response: ${text.slice(0, 200)}`) }
+  if (!res.ok) throw new Error(data.error || data.message || `HTTP ${res.status}`)
   return data
 }
 
